@@ -1,0 +1,717 @@
+{
+  "info": {
+    "_postman_id": "f8e4bc7c-nest-api-collection",
+    "name": "🚀 First NestJS App — Full API",
+    "description": "Complete API collection for first-nest-app.\n\n**Base URL:** `{{base_url}}`  (default: http://localhost:3000)\n\n**Auth Flow:**\n1. Run **Register** to create an account\n2. Run **Login** to get tokens — `accessToken` & `refreshToken` are saved automatically\n3. All protected routes use `{{accessToken}}` in the Authorization header automatically\n\n**Roles:**\n- `admin` — Full access\n- `seller` — Can manage own products\n- `user` — Read-only access",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url",     "value": "http://localhost:3000", "type": "string" },
+    { "key": "accessToken",  "value": "",                     "type": "string" },
+    { "key": "refreshToken", "value": "",                     "type": "string" },
+    { "key": "userId",       "value": "",                     "type": "string" },
+    { "key": "brandId",      "value": "",                     "type": "string" },
+    { "key": "categoryId",   "value": "",                     "type": "string" },
+    { "key": "productId",    "value": "",                     "type": "string" },
+    { "key": "sellerId",     "value": "",                     "type": "string" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "🔐 Auth",
+      "description": "Authentication endpoints — Register and Login. Public routes (no token required).",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.data && json.data._id) {",
+                  "    pm.collectionVariables.set('userId', json.data._id);",
+                  "    console.log('Saved userId:', json.data._id);",
+                  "  }",
+                  "  pm.test('Register successful', () => pm.expect(json.success).to.be.true);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@nestapp.com\",\n  \"password\": \"Admin@1234\",\n  \"username\": \"admin_taha\",\n  \"phoneNumber\": \"+201001234567\",\n  \"provider\": \"local\",\n  \"role\": \"admin\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Register a new user. Defaults to `admin` role for testing.\n\nAvailable roles: `admin`, `seller`, `user`\nAvailable providers: `local`, `google`, `facebook`"
+          }
+        },
+        {
+          "name": "Register (Seller)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.data && json.data._id) {",
+                  "    pm.collectionVariables.set('sellerId', json.data._id);",
+                  "    console.log('Saved sellerId:', json.data._id);",
+                  "  }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"seller@nestapp.com\",\n  \"password\": \"Seller@1234\",\n  \"username\": \"seller_one\",\n  \"phoneNumber\": \"+201009876543\",\n  \"provider\": \"local\",\n  \"role\": \"seller\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Register a seller account. The `sellerId` variable is auto-saved and used in Product creation."
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.data) {",
+                  "    pm.collectionVariables.set('accessToken', json.data.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', json.data.refreshToken);",
+                  "    console.log('✅ Tokens saved successfully!');",
+                  "    pm.test('Login successful', () => pm.expect(json.success).to.be.true);",
+                  "    pm.test('accessToken present', () => pm.expect(json.data.accessToken).to.be.a('string'));",
+                  "  }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@nestapp.com\",\n  \"password\": \"Admin@1234\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login and receive JWT tokens.\n\n✅ **Auto-saves:** `accessToken` and `refreshToken` as collection variables.\nAll subsequent protected requests will use the saved token automatically."
+          }
+        },
+        {
+          "name": "Login (Seller)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.data) {",
+                  "    pm.collectionVariables.set('accessToken', json.data.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', json.data.refreshToken);",
+                  "    console.log('✅ Seller tokens saved!');",
+                  "  }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"seller@nestapp.com\",\n  \"password\": \"Seller@1234\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login as seller — switches `accessToken` to seller's token."
+          }
+        }
+      ]
+    },
+    {
+      "name": "👤 Users",
+      "description": "User management endpoints.\n\n**Required role:** `admin` for create/update/delete, all roles for read.",
+      "item": [
+        {
+          "name": "Create User (Admin only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json._id) pm.collectionVariables.set('userId', json._id);",
+                  "  pm.test('User created', () => pm.response.to.have.status(201));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"new_user_test\",\n  \"password\": \"User@1234\",\n  \"email\": \"newuser@nestapp.com\",\n  \"phoneNumber\": \"+201112223344\",\n  \"provider\": \"local\",\n  \"role\": \"user\",\n  \"isVerified\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/user",
+              "host": ["{{base_url}}"],
+              "path": ["user"]
+            },
+            "description": "Create a new user. Requires `admin` role.\n\nToken is auto-applied from collection-level auth."
+          }
+        },
+        {
+          "name": "Get All Users",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Response is array', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('array');",
+                  "  if (json.length > 0) {",
+                  "    pm.collectionVariables.set('userId', json[0]._id);",
+                  "    console.log('Auto-saved first userId:', json[0]._id);",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/user",
+              "host": ["{{base_url}}"],
+              "path": ["user"]
+            },
+            "description": "Fetch all users. Available to `admin`, `seller`, `user` roles.\n\nAuto-saves the first result's `_id` as `userId`."
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/user/{{userId}}",
+              "host": ["{{base_url}}"],
+              "path": ["user", "{{userId}}"]
+            },
+            "description": "Fetch a single user by MongoDB `_id`.\n\nUses `{{userId}}` variable — set it from **Get All Users** or **Create User** responses."
+          }
+        },
+        {
+          "name": "Update User (Admin only)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"updated_username\",\n  \"phoneNumber\": \"+201119998877\",\n  \"isVerified\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/user/{{userId}}",
+              "host": ["{{base_url}}"],
+              "path": ["user", "{{userId}}"]
+            },
+            "description": "Partially update a user. Requires `admin` role.\n\nOnly include fields you want to change."
+          }
+        },
+        {
+          "name": "Delete User (Admin only)",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/user/{{userId}}",
+              "host": ["{{base_url}}"],
+              "path": ["user", "{{userId}}"]
+            },
+            "description": "Delete a user by ID. Requires `admin` role.\n\n⚠️ This is a hard delete — irreversible."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏷️ Brands",
+      "description": "Brand management endpoints.\n\n**Create/Update/Delete:** `admin` only\n**Read:** All authenticated roles",
+      "item": [
+        {
+          "name": "Create Brand (Admin only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  const id = json._id || (json.data && json.data._id);",
+                  "  if (id) {",
+                  "    pm.collectionVariables.set('brandId', id);",
+                  "    console.log('✅ Saved brandId:', id);",
+                  "  }",
+                  "  pm.test('Brand created successfully', () => pm.response.to.be.successful);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Nike\",\n  \"description\": \"Just Do It — leading global sports brand\",\n  \"logo\": \"https://upload.wikimedia.org/wikipedia/commons/a/a6/Logo_NIKE.svg\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/brand",
+              "host": ["{{base_url}}"],
+              "path": ["brand"]
+            },
+            "description": "Create a new brand. Requires `admin` role.\n\nAuto-saves `brandId` for use in other requests."
+          }
+        },
+        {
+          "name": "Get All Brands",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('Response is array', () => pm.expect(json).to.be.an('array'));",
+                  "if (Array.isArray(json) && json.length > 0) {",
+                  "  pm.collectionVariables.set('brandId', json[0]._id);",
+                  "  console.log('Auto-saved brandId:', json[0]._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/brand",
+              "host": ["{{base_url}}"],
+              "path": ["brand"],
+              "query": [
+                { "key": "search",   "value": "",     "disabled": true, "description": "Filter by brand name (partial match)" },
+                { "key": "isActive", "value": "true", "disabled": true, "description": "Filter by active status (true/false)" }
+              ]
+            },
+            "description": "Fetch all brands with optional filters.\n\n**Query params (all optional):**\n- `search` — partial name search\n- `isActive` — `true` or `false`"
+          }
+        },
+        {
+          "name": "Get Brand by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/brand/{{brandId}}",
+              "host": ["{{base_url}}"],
+              "path": ["brand", "{{brandId}}"]
+            },
+            "description": "Get a single brand by its MongoDB `_id`."
+          }
+        },
+        {
+          "name": "Update Brand (Admin only)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Updated — Nike: world's leading sports apparel brand\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/brand/{{brandId}}",
+              "host": ["{{base_url}}"],
+              "path": ["brand", "{{brandId}}"]
+            },
+            "description": "Partially update a brand. Requires `admin` role."
+          }
+        },
+        {
+          "name": "Delete Brand (Admin only)",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/brand/{{brandId}}",
+              "host": ["{{base_url}}"],
+              "path": ["brand", "{{brandId}}"]
+            },
+            "description": "Delete a brand by ID. Requires `admin` role.\n\n⚠️ This is a hard delete."
+          }
+        }
+      ]
+    },
+    {
+      "name": "📂 Categories",
+      "description": "Category management endpoints.\n\n**Create/Update/Delete:** `admin` only\n**Read:** All authenticated roles\n\nCategories support a **parent-child hierarchy** via the `parent` field (MongoDB ObjectId).",
+      "item": [
+        {
+          "name": "Create Category (Admin only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  const id = json._id || (json.data && json.data._id);",
+                  "  if (id) {",
+                  "    pm.collectionVariables.set('categoryId', id);",
+                  "    console.log('✅ Saved categoryId:', id);",
+                  "  }",
+                  "  pm.test('Category created', () => pm.response.to.be.successful);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Electronics\",\n  \"description\": \"All electronic devices and accessories\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/category",
+              "host": ["{{base_url}}"],
+              "path": ["category"]
+            },
+            "description": "Create a top-level category. Requires `admin` role.\n\nTo create a sub-category, add `\"parent\": \"<parentCategoryId>\"`.\n\nAuto-saves `categoryId`."
+          }
+        },
+        {
+          "name": "Create Sub-Category (Admin only)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Smartphones\",\n  \"description\": \"Mobile phones and smart devices\",\n  \"parent\": \"{{categoryId}}\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/category",
+              "host": ["{{base_url}}"],
+              "path": ["category"]
+            },
+            "description": "Create a sub-category under `{{categoryId}}` (Electronics).\n\nRun **Create Category** first to set `{{categoryId}}`."
+          }
+        },
+        {
+          "name": "Get All Categories",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('Response is array', () => pm.expect(json).to.be.an('array'));",
+                  "if (Array.isArray(json) && json.length > 0) {",
+                  "  pm.collectionVariables.set('categoryId', json[0]._id);",
+                  "  console.log('Auto-saved categoryId:', json[0]._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/category",
+              "host": ["{{base_url}}"],
+              "path": ["category"],
+              "query": [
+                { "key": "search",   "value": "",      "disabled": true, "description": "Filter by category name" },
+                { "key": "isActive", "value": "true",  "disabled": true, "description": "Filter by active status" },
+                { "key": "parent",   "value": "",      "disabled": true, "description": "Filter by parent category ObjectId" }
+              ]
+            },
+            "description": "Fetch all categories with optional filters.\n\n**Query params (all optional):**\n- `search` — partial name search\n- `isActive` — `true` or `false`\n- `parent` — filter by parent ObjectId (for sub-categories)"
+          }
+        },
+        {
+          "name": "Get Category by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/category/{{categoryId}}",
+              "host": ["{{base_url}}"],
+              "path": ["category", "{{categoryId}}"]
+            },
+            "description": "Get a single category by MongoDB `_id`."
+          }
+        },
+        {
+          "name": "Update Category (Admin only)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Updated — Consumer electronics, gadgets and accessories\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/category/{{categoryId}}",
+              "host": ["{{base_url}}"],
+              "path": ["category", "{{categoryId}}"]
+            },
+            "description": "Partially update a category. Requires `admin` role."
+          }
+        },
+        {
+          "name": "Delete Category (Admin only)",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/category/{{categoryId}}",
+              "host": ["{{base_url}}"],
+              "path": ["category", "{{categoryId}}"]
+            },
+            "description": "Delete a category by ID. Requires `admin` role.\n\n⚠️ Hard delete — children may become orphaned."
+          }
+        }
+      ]
+    },
+    {
+      "name": "📦 Products",
+      "description": "Product management endpoints.\n\n**Create/Update/Delete:** `admin` or `seller`\n**Read:** All authenticated roles\n\n**Prerequisite:** Create a Category, Brand, and Seller first — their IDs are used here.",
+      "item": [
+        {
+          "name": "Create Product",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  const id = json._id || (json.data && json.data._id);",
+                  "  if (id) {",
+                  "    pm.collectionVariables.set('productId', id);",
+                  "    console.log('✅ Saved productId:', id);",
+                  "  }",
+                  "  pm.test('Product created', () => pm.response.to.be.successful);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Nike Air Max 270\",\n  \"description\": \"The Nike Air Max 270 features the biggest Max Air unit yet, delivering exceptional cushioning and comfort for all-day wear.\",\n  \"price\": 149.99,\n  \"quantity\": 50,\n  \"category\": \"{{categoryId}}\",\n  \"brand\": \"{{brandId}}\",\n  \"seller\": \"{{sellerId}}\",\n  \"images\": [\n    \"https://static.nike.com/a/images/t_PDP_1728_v1/f_auto,q_auto:eco/air-max-270.jpg\"\n  ],\n  \"isAvailable\": true,\n  \"rating\": 4.5\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/product",
+              "host": ["{{base_url}}"],
+              "path": ["product"]
+            },
+            "description": "Create a product. Requires `admin` or `seller` role.\n\n**Required fields:** `name`, `description`, `price`, `quantity`, `category`, `seller`\n**Optional fields:** `brand`, `images`, `isAvailable`, `soldCount`, `rating`\n\n⚠️ Make sure `{{categoryId}}`, `{{brandId}}`, and `{{sellerId}}` are set (run Create Category, Create Brand, Register Seller first).\n\nAuto-saves `productId`."
+          }
+        },
+        {
+          "name": "Create Product (Minimal)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Generic T-Shirt\",\n  \"description\": \"Basic cotton t-shirt in various sizes\",\n  \"price\": 19.99,\n  \"quantity\": 200,\n  \"category\": \"{{categoryId}}\",\n  \"seller\": \"{{sellerId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/product",
+              "host": ["{{base_url}}"],
+              "path": ["product"]
+            },
+            "description": "Create a product with only the required fields (no brand, no images)."
+          }
+        },
+        {
+          "name": "Get All Products",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('Response is array', () => pm.expect(json).to.be.an('array'));",
+                  "if (Array.isArray(json) && json.length > 0) {",
+                  "  pm.collectionVariables.set('productId', json[0]._id);",
+                  "  console.log('Auto-saved productId:', json[0]._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/product",
+              "host": ["{{base_url}}"],
+              "path": ["product"],
+              "query": [
+                { "key": "search",      "value": "",       "disabled": true, "description": "Filter by product name (partial match, max 120 chars)" },
+                { "key": "category",    "value": "",       "disabled": true, "description": "Filter by category ObjectId" },
+                { "key": "brand",       "value": "",       "disabled": true, "description": "Filter by brand ObjectId" },
+                { "key": "seller",      "value": "",       "disabled": true, "description": "Filter by seller ObjectId" },
+                { "key": "minPrice",    "value": "0",      "disabled": true, "description": "Minimum price (inclusive)" },
+                { "key": "maxPrice",    "value": "500",    "disabled": true, "description": "Maximum price (inclusive)" },
+                { "key": "isAvailable", "value": "true",   "disabled": true, "description": "Filter by availability (true/false)" }
+              ]
+            },
+            "description": "Fetch all products with optional filters.\n\n**Query params (all optional):**\n- `search` — name partial match\n- `category` — ObjectId\n- `brand` — ObjectId\n- `seller` — ObjectId\n- `minPrice` / `maxPrice` — price range\n- `isAvailable` — `true` or `false`"
+          }
+        },
+        {
+          "name": "Get Products — Filtered Example",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/product?minPrice=10&maxPrice=200&isAvailable=true",
+              "host": ["{{base_url}}"],
+              "path": ["product"],
+              "query": [
+                { "key": "minPrice",    "value": "10"   },
+                { "key": "maxPrice",    "value": "200"  },
+                { "key": "isAvailable", "value": "true" }
+              ]
+            },
+            "description": "Example: Get available products priced between $10 and $200."
+          }
+        },
+        {
+          "name": "Get Product by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/product/{{productId}}",
+              "host": ["{{base_url}}"],
+              "path": ["product", "{{productId}}"]
+            },
+            "description": "Get a single product by MongoDB `_id`."
+          }
+        },
+        {
+          "name": "Update Product",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 129.99,\n  \"quantity\": 75,\n  \"description\": \"Updated — Nike Air Max 270 with improved comfort and style. Now on sale!\",\n  \"isAvailable\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/product/{{productId}}",
+              "host": ["{{base_url}}"],
+              "path": ["product", "{{productId}}"]
+            },
+            "description": "Partially update a product. Requires `admin` or `seller` role."
+          }
+        },
+        {
+          "name": "Delete Product",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/product/{{productId}}",
+              "host": ["{{base_url}}"],
+              "path": ["product", "{{productId}}"]
+            },
+            "description": "Delete a product by ID. Requires `admin` or `seller` role."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏠 Health Check",
+      "description": "Public endpoint to verify the server is running.",
+      "item": [
+        {
+          "name": "Health Check (GET /)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Server is up', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/",
+              "host": ["{{base_url}}"],
+              "path": [""]
+            },
+            "description": "Public health check. Returns a string. No token required."
+          }
+        }
+      ]
+    }
+  ]
+}

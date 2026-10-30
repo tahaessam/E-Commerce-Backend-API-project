@@ -1,0 +1,1503 @@
+{
+  "info": {
+    "_postman_id": "f8e4bc7c-multi-app-collection",
+    "name": "🚀 Complete Multi-App API Collection",
+    "description": "Comprehensive API collection for all 4 applications:\n\n**1. First NestJS App (NestJS)**\n- Base URL: `{{base_url}}` (default: http://localhost:3000)\n- Modules: Auth, Users, Brands, Categories, Products\n- Auth Flow: Register → Login → Get Tokens → Use accessToken for protected routes\n\n**2. Social Media App (Express + TypeScript)**\n- Base URL: `{{social_media_base_url}}` (default: http://localhost:5000)\n- Modules: Auth, Posts, Comments, Friend Requests\n\n**3. Social App Self (Express + TypeScript)**\n- Base URL: `{{self_app_base_url}}` (default: http://localhost:5001)\n- Modules: Auth with OTP verification\n\n**4. Saeaha App (Express)**\n- Base URL: `{{saeaha_base_url}}` (default: http://localhost:5002)\n- Modules: Auth & User health checks\n\n**Setup:** Configure collection variables with appropriate base URLs for your environment.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url",     "value": "http://localhost:3000", "type": "string" },
+    { "key": "social_media_base_url",     "value": "http://localhost:5000", "type": "string" },
+    { "key": "self_app_base_url",     "value": "http://localhost:5001", "type": "string" },
+    { "key": "saeaha_base_url",     "value": "http://localhost:5002", "type": "string" },
+    { "key": "accessToken",  "value": "",                     "type": "string" },
+    { "key": "refreshToken", "value": "",                     "type": "string" },
+    { "key": "socialAccessToken",  "value": "",                     "type": "string" },
+    { "key": "selfAppAccessToken",  "value": "",                     "type": "string" },
+    { "key": "userId",       "value": "",                     "type": "string" },
+    { "key": "socialUserId",       "value": "",                     "type": "string" },
+    { "key": "selfAppUserId",       "value": "",                     "type": "string" },
+    { "key": "brandId",      "value": "",                     "type": "string" },
+    { "key": "categoryId",   "value": "",                     "type": "string" },
+    { "key": "productId",    "value": "",                     "type": "string" },
+    { "key": "postId",    "value": "",                     "type": "string" },
+    { "key": "commentId",    "value": "",                     "type": "string" },
+    { "key": "requestId",    "value": "",                     "type": "string" },
+    { "key": "sellerId",     "value": "",                     "type": "string" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+  },
+  "item": [
+
+    {
+      "name": "🔐 Auth",
+      "description": "Authentication endpoints — Register and Login. Public routes (no token required).",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.data && json.data._id) {",
+                  "    pm.collectionVariables.set('userId', json.data._id);",
+                  "    console.log('Saved userId:', json.data._id);",
+                  "  }",
+                  "  pm.test('Register successful', () => pm.expect(json.success).to.be.true);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@nestapp.com\",\n  \"password\": \"Admin@1234\",\n  \"username\": \"admin_taha\",\n  \"phoneNumber\": \"+201001234567\",\n  \"provider\": \"local\",\n  \"role\": \"admin\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Register a new user. Defaults to `admin` role for testing.\n\nAvailable roles: `admin`, `seller`, `user`\nAvailable providers: `local`, `google`, `facebook`"
+          }
+        },
+        {
+          "name": "Register (Seller)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.data && json.data._id) {",
+                  "    pm.collectionVariables.set('sellerId', json.data._id);",
+                  "    console.log('Saved sellerId:', json.data._id);",
+                  "  }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"seller@nestapp.com\",\n  \"password\": \"Seller@1234\",\n  \"username\": \"seller_one\",\n  \"phoneNumber\": \"+201009876543\",\n  \"provider\": \"local\",\n  \"role\": \"seller\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Register a seller account. The `sellerId` variable is auto-saved and used in Product creation."
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.data) {",
+                  "    pm.collectionVariables.set('accessToken', json.data.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', json.data.refreshToken);",
+                  "    console.log('✅ Tokens saved successfully!');",
+                  "    pm.test('Login successful', () => pm.expect(json.success).to.be.true);",
+                  "    pm.test('accessToken present', () => pm.expect(json.data.accessToken).to.be.a('string'));",
+                  "  }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@nestapp.com\",\n  \"password\": \"Admin@1234\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login and receive JWT tokens.\n\n✅ **Auto-saves:** `accessToken` and `refreshToken` as collection variables.\nAll subsequent protected requests will use the saved token automatically."
+          }
+        },
+        {
+          "name": "Login (Seller)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.data) {",
+                  "    pm.collectionVariables.set('accessToken', json.data.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', json.data.refreshToken);",
+                  "    console.log('✅ Seller tokens saved!');",
+                  "  }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"seller@nestapp.com\",\n  \"password\": \"Seller@1234\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login as seller — switches `accessToken` to seller's token."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "👤 Users",
+      "description": "User management endpoints.\n\n**Required role:** `admin` for create/update/delete, all roles for read.",
+      "item": [
+        {
+          "name": "Create User (Admin only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json._id) pm.collectionVariables.set('userId', json._id);",
+                  "  pm.test('User created', () => pm.response.to.have.status(201));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"new_user_test\",\n  \"password\": \"User@1234\",\n  \"email\": \"newuser@nestapp.com\",\n  \"phoneNumber\": \"+201112223344\",\n  \"provider\": \"local\",\n  \"role\": \"user\",\n  \"isVerified\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/user",
+              "host": ["{{base_url}}"],
+              "path": ["user"]
+            },
+            "description": "Create a new user. Requires `admin` role.\n\nToken is auto-applied from collection-level auth."
+          }
+        },
+        {
+          "name": "Get All Users",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Response is array', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('array');",
+                  "  if (json.length > 0) {",
+                  "    pm.collectionVariables.set('userId', json[0]._id);",
+                  "    console.log('Auto-saved first userId:', json[0]._id);",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/user",
+              "host": ["{{base_url}}"],
+              "path": ["user"]
+            },
+            "description": "Fetch all users. Available to `admin`, `seller`, `user` roles.\n\nAuto-saves the first result's `_id` as `userId`."
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/user/{{userId}}",
+              "host": ["{{base_url}}"],
+              "path": ["user", "{{userId}}"]
+            },
+            "description": "Fetch a single user by MongoDB `_id`.\n\nUses `{{userId}}` variable — set it from **Get All Users** or **Create User** responses."
+          }
+        },
+        {
+          "name": "Update User (Admin only)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"updated_username\",\n  \"phoneNumber\": \"+201119998877\",\n  \"isVerified\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/user/{{userId}}",
+              "host": ["{{base_url}}"],
+              "path": ["user", "{{userId}}"]
+            },
+            "description": "Partially update a user. Requires `admin` role.\n\nOnly include fields you want to change."
+          }
+        },
+        {
+          "name": "Delete User (Admin only)",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/user/{{userId}}",
+              "host": ["{{base_url}}"],
+              "path": ["user", "{{userId}}"]
+            },
+            "description": "Delete a user by ID. Requires `admin` role.\n\n⚠️ This is a hard delete — irreversible."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "🏷️ Brands",
+      "description": "Brand management endpoints.\n\n**Create/Update/Delete:** `admin` only\n**Read:** All authenticated roles",
+      "item": [
+        {
+          "name": "Create Brand (Admin only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  const id = json._id || (json.data && json.data._id);",
+                  "  if (id) {",
+                  "    pm.collectionVariables.set('brandId', id);",
+                  "    console.log('✅ Saved brandId:', id);",
+                  "  }",
+                  "  pm.test('Brand created successfully', () => pm.response.to.be.successful);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Nike\",\n  \"description\": \"Just Do It — leading global sports brand\",\n  \"logo\": \"https://upload.wikimedia.org/wikipedia/commons/a/a6/Logo_NIKE.svg\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/brand",
+              "host": ["{{base_url}}"],
+              "path": ["brand"]
+            },
+            "description": "Create a new brand. Requires `admin` role.\n\nAuto-saves `brandId` for use in other requests."
+          }
+        },
+        {
+          "name": "Get All Brands",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('Response is array', () => pm.expect(json).to.be.an('array'));",
+                  "if (Array.isArray(json) && json.length > 0) {",
+                  "  pm.collectionVariables.set('brandId', json[0]._id);",
+                  "  console.log('Auto-saved brandId:', json[0]._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/brand",
+              "host": ["{{base_url}}"],
+              "path": ["brand"],
+              "query": [
+                { "key": "search",   "value": "",     "disabled": true, "description": "Filter by brand name (partial match)" },
+                { "key": "isActive", "value": "true", "disabled": true, "description": "Filter by active status (true/false)" }
+              ]
+            },
+            "description": "Fetch all brands with optional filters.\n\n**Query params (all optional):**\n- `search` — partial name search\n- `isActive` — `true` or `false`"
+          }
+        },
+        {
+          "name": "Get Brand by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/brand/{{brandId}}",
+              "host": ["{{base_url}}"],
+              "path": ["brand", "{{brandId}}"]
+            },
+            "description": "Get a single brand by its MongoDB `_id`."
+          }
+        },
+        {
+          "name": "Update Brand (Admin only)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Updated — Nike: world's leading sports apparel brand\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/brand/{{brandId}}",
+              "host": ["{{base_url}}"],
+              "path": ["brand", "{{brandId}}"]
+            },
+            "description": "Partially update a brand. Requires `admin` role."
+          }
+        },
+        {
+          "name": "Delete Brand (Admin only)",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/brand/{{brandId}}",
+              "host": ["{{base_url}}"],
+              "path": ["brand", "{{brandId}}"]
+            },
+            "description": "Delete a brand by ID. Requires `admin` role.\n\n⚠️ This is a hard delete."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "📂 Categories",
+      "description": "Category management endpoints.\n\n**Create/Update/Delete:** `admin` only\n**Read:** All authenticated roles\n\nCategories support a **parent-child hierarchy** via the `parent` field (MongoDB ObjectId).",
+      "item": [
+        {
+          "name": "Create Category (Admin only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  const id = json._id || (json.data && json.data._id);",
+                  "  if (id) {",
+                  "    pm.collectionVariables.set('categoryId', id);",
+                  "    console.log('✅ Saved categoryId:', id);",
+                  "  }",
+                  "  pm.test('Category created', () => pm.response.to.be.successful);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Electronics\",\n  \"description\": \"All electronic devices and accessories\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/category",
+              "host": ["{{base_url}}"],
+              "path": ["category"]
+            },
+            "description": "Create a top-level category. Requires `admin` role.\n\nTo create a sub-category, add `\"parent\": \"<parentCategoryId>\"`.\n\nAuto-saves `categoryId`."
+          }
+        },
+        {
+          "name": "Create Sub-Category (Admin only)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Smartphones\",\n  \"description\": \"Mobile phones and smart devices\",\n  \"parent\": \"{{categoryId}}\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/category",
+              "host": ["{{base_url}}"],
+              "path": ["category"]
+            },
+            "description": "Create a sub-category under `{{categoryId}}` (Electronics).\n\nRun **Create Category** first to set `{{categoryId}}`."
+          }
+        },
+        {
+          "name": "Get All Categories",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('Response is array', () => pm.expect(json).to.be.an('array'));",
+                  "if (Array.isArray(json) && json.length > 0) {",
+                  "  pm.collectionVariables.set('categoryId', json[0]._id);",
+                  "  console.log('Auto-saved categoryId:', json[0]._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/category",
+              "host": ["{{base_url}}"],
+              "path": ["category"],
+              "query": [
+                { "key": "search",   "value": "",      "disabled": true, "description": "Filter by category name" },
+                { "key": "isActive", "value": "true",  "disabled": true, "description": "Filter by active status" },
+                { "key": "parent",   "value": "",      "disabled": true, "description": "Filter by parent category ObjectId" }
+              ]
+            },
+            "description": "Fetch all categories with optional filters.\n\n**Query params (all optional):**\n- `search` — partial name search\n- `isActive` — `true` or `false`\n- `parent` — filter by parent ObjectId (for sub-categories)"
+          }
+        },
+        {
+          "name": "Get Category by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/category/{{categoryId}}",
+              "host": ["{{base_url}}"],
+              "path": ["category", "{{categoryId}}"]
+            },
+            "description": "Get a single category by MongoDB `_id`."
+          }
+        },
+        {
+          "name": "Update Category (Admin only)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Updated — Consumer electronics, gadgets and accessories\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/category/{{categoryId}}",
+              "host": ["{{base_url}}"],
+              "path": ["category", "{{categoryId}}"]
+            },
+            "description": "Partially update a category. Requires `admin` role."
+          }
+        },
+        {
+          "name": "Delete Category (Admin only)",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/category/{{categoryId}}",
+              "host": ["{{base_url}}"],
+              "path": ["category", "{{categoryId}}"]
+            },
+            "description": "Delete a category by ID. Requires `admin` role.\n\n⚠️ Hard delete — children may become orphaned."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "📦 Products",
+      "description": "Product management endpoints.\n\n**Create/Update/Delete:** `admin` or `seller`\n**Read:** All authenticated roles\n\n**Prerequisite:** Create a Category, Brand, and Seller first — their IDs are used here.",
+      "item": [
+        {
+          "name": "Create Product",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  const id = json._id || (json.data && json.data._id);",
+                  "  if (id) {",
+                  "    pm.collectionVariables.set('productId', id);",
+                  "    console.log('✅ Saved productId:', id);",
+                  "  }",
+                  "  pm.test('Product created', () => pm.response.to.be.successful);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Nike Air Max 270\",\n  \"description\": \"The Nike Air Max 270 features the biggest Max Air unit yet, delivering exceptional cushioning and comfort for all-day wear.\",\n  \"price\": 149.99,\n  \"quantity\": 50,\n  \"category\": \"{{categoryId}}\",\n  \"brand\": \"{{brandId}}\",\n  \"seller\": \"{{sellerId}}\",\n  \"images\": [\n    \"https://static.nike.com/a/images/t_PDP_1728_v1/f_auto,q_auto:eco/air-max-270.jpg\"\n  ],\n  \"isAvailable\": true,\n  \"rating\": 4.5\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/product",
+              "host": ["{{base_url}}"],
+              "path": ["product"]
+            },
+            "description": "Create a product. Requires `admin` or `seller` role.\n\n**Required fields:** `name`, `description`, `price`, `quantity`, `category`, `seller`\n**Optional fields:** `brand`, `images`, `isAvailable`, `soldCount`, `rating`\n\n⚠️ Make sure `{{categoryId}}`, `{{brandId}}`, and `{{sellerId}}` are set (run Create Category, Create Brand, Register Seller first).\n\nAuto-saves `productId`."
+          }
+        },
+        {
+          "name": "Create Product (Minimal)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Generic T-Shirt\",\n  \"description\": \"Basic cotton t-shirt in various sizes\",\n  \"price\": 19.99,\n  \"quantity\": 200,\n  \"category\": \"{{categoryId}}\",\n  \"seller\": \"{{sellerId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/product",
+              "host": ["{{base_url}}"],
+              "path": ["product"]
+            },
+            "description": "Create a product with only the required fields (no brand, no images)."
+          }
+        },
+        {
+          "name": "Get All Products",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('Response is array', () => pm.expect(json).to.be.an('array'));",
+                  "if (Array.isArray(json) && json.length > 0) {",
+                  "  pm.collectionVariables.set('productId', json[0]._id);",
+                  "  console.log('Auto-saved productId:', json[0]._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/product",
+              "host": ["{{base_url}}"],
+              "path": ["product"],
+              "query": [
+                { "key": "search",      "value": "",       "disabled": true, "description": "Filter by product name (partial match, max 120 chars)" },
+                { "key": "category",    "value": "",       "disabled": true, "description": "Filter by category ObjectId" },
+                { "key": "brand",       "value": "",       "disabled": true, "description": "Filter by brand ObjectId" },
+                { "key": "seller",      "value": "",       "disabled": true, "description": "Filter by seller ObjectId" },
+                { "key": "minPrice",    "value": "0",      "disabled": true, "description": "Minimum price (inclusive)" },
+                { "key": "maxPrice",    "value": "500",    "disabled": true, "description": "Maximum price (inclusive)" },
+                { "key": "isAvailable", "value": "true",   "disabled": true, "description": "Filter by availability (true/false)" }
+              ]
+            },
+            "description": "Fetch all products with optional filters.\n\n**Query params (all optional):**\n- `search` — name partial match\n- `category` — ObjectId\n- `brand` — ObjectId\n- `seller` — ObjectId\n- `minPrice` / `maxPrice` — price range\n- `isAvailable` — `true` or `false`"
+          }
+        },
+        {
+          "name": "Get Products — Filtered Example",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/product?minPrice=10&maxPrice=200&isAvailable=true",
+              "host": ["{{base_url}}"],
+              "path": ["product"],
+              "query": [
+                { "key": "minPrice",    "value": "10"   },
+                { "key": "maxPrice",    "value": "200"  },
+                { "key": "isAvailable", "value": "true" }
+              ]
+            },
+            "description": "Example: Get available products priced between $10 and $200."
+          }
+        },
+        {
+          "name": "Get Product by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/product/{{productId}}",
+              "host": ["{{base_url}}"],
+              "path": ["product", "{{productId}}"]
+            },
+            "description": "Get a single product by MongoDB `_id`."
+          }
+        },
+        {
+          "name": "Update Product",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 129.99,\n  \"quantity\": 75,\n  \"description\": \"Updated — Nike Air Max 270 with improved comfort and style. Now on sale!\",\n  \"isAvailable\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/product/{{productId}}",
+              "host": ["{{base_url}}"],
+              "path": ["product", "{{productId}}"]
+            },
+            "description": "Partially update a product. Requires `admin` or `seller` role."
+          }
+        },
+        {
+          "name": "Delete Product",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/product/{{productId}}",
+              "host": ["{{base_url}}"],
+              "path": ["product", "{{productId}}"]
+            },
+            "description": "Delete a product by ID. Requires `admin` or `seller` role."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "🏠 Health Check — First NestJS App",
+      "description": "Public endpoint to verify the server is running.",
+      "item": [
+        {
+          "name": "Health Check (GET /)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Server is up', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/",
+              "host": ["{{base_url}}"],
+              "path": [""]
+            },
+            "description": "Public health check. Returns a string. No token required."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "📱 SOCIAL MEDIA APP",
+      "description": "Complete API collection for social_media-app (Express + TypeScript). Base URL: http://localhost:5000",
+      "item": [
+        {
+          "name": "🔐 Auth",
+          "description": "Authentication endpoints for social media app",
+          "item": [
+            {
+              "name": "Sign Up",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201 || pm.response.code === 200) {",
+                      "  const json = pm.response.json();",
+                      "  if (json.data && json.data._id) {",
+                      "    pm.collectionVariables.set('socialUserId', json.data._id);",
+                      "  }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"user@socialmedia.com\",\n  \"password\": \"Password@123\",\n  \"username\": \"socialuser\"\n}"
+                },
+                "url": {
+                  "raw": "{{social_media_base_url}}/auth/signup",
+                  "host": ["{{social_media_base_url}}"],
+                  "path": ["auth", "signup"]
+                },
+                "description": "User registration for social media app"
+              }
+            },
+            {
+              "name": "Confirm Email",
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"user@socialmedia.com\",\n  \"otp\": \"123456\"\n}"
+                },
+                "url": {
+                  "raw": "{{social_media_base_url}}/auth/confirm-email",
+                  "host": ["{{social_media_base_url}}"],
+                  "path": ["auth", "confirm-email"]
+                },
+                "description": "Confirm email with OTP"
+              }
+            },
+            {
+              "name": "Login",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "  const json = pm.response.json();",
+                      "  if (json.data && json.data.token) {",
+                      "    pm.collectionVariables.set('socialAccessToken', json.data.token);",
+                      "  }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"user@socialmedia.com\",\n  \"password\": \"Password@123\"\n}"
+                },
+                "url": {
+                  "raw": "{{social_media_base_url}}/auth/login",
+                  "host": ["{{social_media_base_url}}"],
+                  "path": ["auth", "login"]
+                },
+                "description": "User login"
+              }
+            },
+            {
+              "name": "Logout",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Authorization", "value": "Bearer {{socialAccessToken}}" }],
+                "url": {
+                  "raw": "{{social_media_base_url}}/auth/logout",
+                  "host": ["{{social_media_base_url}}"],
+                  "path": ["auth", "logout"]
+                },
+                "description": "User logout (requires authentication)"
+              }
+            },
+            {
+              "name": "Update Password",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{socialAccessToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"oldPassword\": \"Password@123\",\n  \"newPassword\": \"NewPassword@123\"\n}"
+                },
+                "url": {
+                  "raw": "{{social_media_base_url}}/auth/update-password",
+                  "host": ["{{social_media_base_url}}"],
+                  "path": ["auth", "update-password"]
+                },
+                "description": "Update user password (requires authentication)"
+              }
+            },
+            {
+              "name": "Forgot Password",
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"user@socialmedia.com\"\n}"
+                },
+                "url": {
+                  "raw": "{{social_media_base_url}}/auth/forget-password",
+                  "host": ["{{social_media_base_url}}"],
+                  "path": ["auth", "forget-password"]
+                },
+                "description": "Initiate forgot password process"
+              }
+            },
+            {
+              "name": "Reset Password",
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"user@socialmedia.com\",\n  \"newPassword\": \"NewPassword@123\",\n  \"resetToken\": \"reset_token_here\"\n}"
+                },
+                "url": {
+                  "raw": "{{social_media_base_url}}/auth/reset-password",
+                  "host": ["{{social_media_base_url}}"],
+                  "path": ["auth", "reset-password"]
+                },
+                "description": "Reset password with token"
+              }
+            },
+            {
+              "name": "Send OTP",
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"user@socialmedia.com\"\n}"
+                },
+                "url": {
+                  "raw": "{{social_media_base_url}}/auth/send-otp",
+                  "host": ["{{social_media_base_url}}"],
+                  "path": ["auth", "send-otp"]
+                },
+                "description": "Send OTP for verification"
+              }
+            },
+            {
+              "name": "Verify OTP",
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"user@socialmedia.com\",\n  \"otp\": \"123456\"\n}"
+                },
+                "url": {
+                  "raw": "{{social_media_base_url}}/auth/verify-otp",
+                  "host": ["{{social_media_base_url}}"],
+                  "path": ["auth", "verify-otp"]
+                },
+                "description": "Verify OTP code"
+              }
+            },
+            {
+              "name": "Resend OTP",
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"user@socialmedia.com\"\n}"
+                },
+                "url": {
+                  "raw": "{{social_media_base_url}}/auth/resend-otp",
+                  "host": ["{{social_media_base_url}}"],
+                  "path": ["auth", "resend-otp"]
+                },
+                "description": "Resend OTP code"
+              }
+            },
+            {
+              "name": "Google OAuth",
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "GET",
+                "url": {
+                  "raw": "{{social_media_base_url}}/auth/google",
+                  "host": ["{{social_media_base_url}}"],
+                  "path": ["auth", "google"]
+                },
+                "description": "Initiate Google OAuth flow"
+              }
+            }
+          ]
+        },
+        {
+          "name": "📝 Posts",
+          "description": "Post management endpoints",
+          "item": [
+            {
+              "name": "Create Post",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{socialAccessToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"content\": \"This is my first post!\",\n  \"images\": [\n    \"https://example.com/image1.jpg\"\n  ]\n}"
+                },
+                "url": {
+                  "raw": "{{social_media_base_url}}/posts",
+                  "host": ["{{social_media_base_url}}"],
+                  "path": ["posts"]
+                },
+                "description": "Create a new post (requires authentication)"
+              }
+            },
+            {
+              "name": "Get All Posts",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{social_media_base_url}}/posts",
+                  "host": ["{{social_media_base_url}}"],
+                  "path": ["posts"]
+                },
+                "description": "Fetch all posts"
+              }
+            },
+            {
+              "name": "Get Post by ID",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{social_media_base_url}}/posts/{{postId}}",
+                  "host": ["{{social_media_base_url}}"],
+                  "path": ["posts", "{{postId}}"]
+                },
+                "description": "Get a single post by ID"
+              }
+            },
+            {
+              "name": "Update Post",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{socialAccessToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"content\": \"Updated post content\"\n}"
+                },
+                "url": {
+                  "raw": "{{social_media_base_url}}/posts/{{postId}}",
+                  "host": ["{{social_media_base_url}}"],
+                  "path": ["posts", "{{postId}}"]
+                },
+                "description": "Update a post (requires authentication)"
+              }
+            },
+            {
+              "name": "Delete Post",
+              "request": {
+                "method": "DELETE",
+                "header": [{ "key": "Authorization", "value": "Bearer {{socialAccessToken}}" }],
+                "url": {
+                  "raw": "{{social_media_base_url}}/posts/{{postId}}",
+                  "host": ["{{social_media_base_url}}"],
+                  "path": ["posts", "{{postId}}"]
+                },
+                "description": "Delete a post (requires authentication)"
+              }
+            },
+            {
+              "name": "Add Reaction to Post",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{socialAccessToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"type\": \"like\"\n}"
+                },
+                "url": {
+                  "raw": "{{social_media_base_url}}/posts/{{postId}}/reactions",
+                  "host": ["{{social_media_base_url}}"],
+                  "path": ["posts", "{{postId}}", "reactions"]
+                },
+                "description": "Add reaction (like, love, etc.) to a post (requires authentication)"
+              }
+            },
+            {
+              "name": "Get Post Reactions",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{social_media_base_url}}/posts/{{postId}}/reactions",
+                  "host": ["{{social_media_base_url}}"],
+                  "path": ["posts", "{{postId}}", "reactions"]
+                },
+                "description": "Get all reactions for a post"
+              }
+            }
+          ]
+        },
+        {
+          "name": "💬 Comments",
+          "description": "Comment management endpoints",
+          "item": [
+            {
+              "name": "Create Comment",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{socialAccessToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"content\": \"Great post!\",\n  \"postId\": \"{{postId}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{social_media_base_url}}/comments",
+                  "host": ["{{social_media_base_url}}"],
+                  "path": ["comments"]
+                },
+                "description": "Create a comment on a post (requires authentication)"
+              }
+            },
+            {
+              "name": "Get Comments",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{social_media_base_url}}/comments?postId={{postId}}",
+                  "host": ["{{social_media_base_url}}"],
+                  "path": ["comments"],
+                  "query": [
+                    { "key": "postId", "value": "{{postId}}", "disabled": true },
+                    { "key": "page", "value": "1", "disabled": true },
+                    { "key": "limit", "value": "10", "disabled": true }
+                  ]
+                },
+                "description": "Get comments with pagination and filtering"
+              }
+            },
+            {
+              "name": "Update Comment",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{socialAccessToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"content\": \"Updated comment\"\n}"
+                },
+                "url": {
+                  "raw": "{{social_media_base_url}}/comments/{{commentId}}",
+                  "host": ["{{social_media_base_url}}"],
+                  "path": ["comments", "{{commentId}}"]
+                },
+                "description": "Update a comment (requires authentication)"
+              }
+            },
+            {
+              "name": "Delete Comment",
+              "request": {
+                "method": "DELETE",
+                "header": [{ "key": "Authorization", "value": "Bearer {{socialAccessToken}}" }],
+                "url": {
+                  "raw": "{{social_media_base_url}}/comments/{{commentId}}",
+                  "host": ["{{social_media_base_url}}"],
+                  "path": ["comments", "{{commentId}}"]
+                },
+                "description": "Delete a comment (requires authentication)"
+              }
+            },
+            {
+              "name": "Add Reaction to Comment",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{socialAccessToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"type\": \"like\"\n}"
+                },
+                "url": {
+                  "raw": "{{social_media_base_url}}/comments/{{commentId}}/reactions",
+                  "host": ["{{social_media_base_url}}"],
+                  "path": ["comments", "{{commentId}}", "reactions"]
+                },
+                "description": "Add reaction to a comment (requires authentication)"
+              }
+            },
+            {
+              "name": "Delete Reaction from Comment",
+              "request": {
+                "method": "DELETE",
+                "header": [{ "key": "Authorization", "value": "Bearer {{socialAccessToken}}" }],
+                "url": {
+                  "raw": "{{social_media_base_url}}/comments/{{commentId}}/reactions",
+                  "host": ["{{social_media_base_url}}"],
+                  "path": ["comments", "{{commentId}}", "reactions"]
+                },
+                "description": "Remove reaction from a comment (requires authentication)"
+              }
+            },
+            {
+              "name": "Get Comment Reactions",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{social_media_base_url}}/comments/{{commentId}}/reactions",
+                  "host": ["{{social_media_base_url}}"],
+                  "path": ["comments", "{{commentId}}", "reactions"]
+                },
+                "description": "Get all reactions for a comment"
+              }
+            }
+          ]
+        },
+        {
+          "name": "🤝 Friend Requests",
+          "description": "Friend request management endpoints",
+          "item": [
+            {
+              "name": "Send Friend Request",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{socialAccessToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"recipientId\": \"user_id_here\"\n}"
+                },
+                "url": {
+                  "raw": "{{social_media_base_url}}/requests/send-request",
+                  "host": ["{{social_media_base_url}}"],
+                  "path": ["requests", "send-request"]
+                },
+                "description": "Send a friend request (requires authentication)"
+              }
+            },
+            {
+              "name": "Accept Friend Request",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{socialAccessToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}"
+                },
+                "url": {
+                  "raw": "{{social_media_base_url}}/requests/{{requestId}}/accept",
+                  "host": ["{{social_media_base_url}}"],
+                  "path": ["requests", "{{requestId}}", "accept"]
+                },
+                "description": "Accept a friend request (requires authentication)"
+              }
+            },
+            {
+              "name": "Decline Friend Request",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{socialAccessToken}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}"
+                },
+                "url": {
+                  "raw": "{{social_media_base_url}}/requests/{{requestId}}/decline",
+                  "host": ["{{social_media_base_url}}"],
+                  "path": ["requests", "{{requestId}}", "decline"]
+                },
+                "description": "Decline a friend request (requires authentication)"
+              }
+            },
+            {
+              "name": "Cancel Friend Request",
+              "request": {
+                "method": "DELETE",
+                "header": [{ "key": "Authorization", "value": "Bearer {{socialAccessToken}}" }],
+                "url": {
+                  "raw": "{{social_media_base_url}}/requests/{{requestId}}/cancel",
+                  "host": ["{{social_media_base_url}}"],
+                  "path": ["requests", "{{requestId}}", "cancel"]
+                },
+                "description": "Cancel a sent friend request (requires authentication)"
+              }
+            },
+            {
+              "name": "Remove Friend",
+              "request": {
+                "method": "DELETE",
+                "header": [{ "key": "Authorization", "value": "Bearer {{socialAccessToken}}" }],
+                "url": {
+                  "raw": "{{social_media_base_url}}/requests/{{requestId}}/remove",
+                  "host": ["{{social_media_base_url}}"],
+                  "path": ["requests", "{{requestId}}", "remove"]
+                },
+                "description": "Remove an accepted friend (requires authentication)"
+              }
+            }
+          ]
+        },
+        {
+          "name": "🏥 Health Checks",
+          "description": "App health check endpoints",
+          "item": [
+            {
+              "name": "Welcome",
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "GET",
+                "url": {
+                  "raw": "{{social_media_base_url}}/",
+                  "host": ["{{social_media_base_url}}"],
+                  "path": [""]
+                },
+                "description": "Welcome message"
+              }
+            },
+            {
+              "name": "Ping",
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "GET",
+                "url": {
+                  "raw": "{{social_media_base_url}}/ping",
+                  "host": ["{{social_media_base_url}}"],
+                  "path": ["ping"]
+                },
+                "description": "Server ping check"
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "🔐 SOCIAL APP SELF",
+      "description": "Complete API collection for social-app-self (Express + TypeScript). Base URL: http://localhost:5001",
+      "item": [
+        {
+          "name": "🔐 Auth",
+          "description": "Authentication endpoints for social-app-self",
+          "item": [
+            {
+              "name": "Sign Up",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201 || pm.response.code === 200) {",
+                      "  const json = pm.response.json();",
+                      "  if (json.data && json.data._id) {",
+                      "    pm.collectionVariables.set('selfAppUserId', json.data._id);",
+                      "  }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"user@selfapp.com\",\n  \"password\": \"Password@123\",\n  \"username\": \"selfuser\"\n}"
+                },
+                "url": {
+                  "raw": "{{self_app_base_url}}/auth/signup",
+                  "host": ["{{self_app_base_url}}"],
+                  "path": ["auth", "signup"]
+                },
+                "description": "User registration"
+              }
+            },
+            {
+              "name": "Login",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "  const json = pm.response.json();",
+                      "  if (json.data && json.data.accessToken) {",
+                      "    pm.collectionVariables.set('selfAppAccessToken', json.data.accessToken);",
+                      "  }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"user@selfapp.com\",\n  \"password\": \"Password@123\"\n}"
+                },
+                "url": {
+                  "raw": "{{self_app_base_url}}/auth/login",
+                  "host": ["{{self_app_base_url}}"],
+                  "path": ["auth", "login"]
+                },
+                "description": "User login"
+              }
+            },
+            {
+              "name": "Forgot Password",
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"user@selfapp.com\"\n}"
+                },
+                "url": {
+                  "raw": "{{self_app_base_url}}/auth/forgot-password",
+                  "host": ["{{self_app_base_url}}"],
+                  "path": ["auth", "forgot-password"]
+                },
+                "description": "Initiate forgot password process"
+              }
+            },
+            {
+              "name": "Send OTP",
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"user@selfapp.com\"\n}"
+                },
+                "url": {
+                  "raw": "{{self_app_base_url}}/auth/send-otp",
+                  "host": ["{{self_app_base_url}}"],
+                  "path": ["auth", "send-otp"]
+                },
+                "description": "Send OTP to email"
+              }
+            },
+            {
+              "name": "Verify Account",
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"user@selfapp.com\",\n  \"otp\": \"123456\"\n}"
+                },
+                "url": {
+                  "raw": "{{self_app_base_url}}/auth/verify-account",
+                  "host": ["{{self_app_base_url}}"],
+                  "path": ["auth", "verify-account"]
+                },
+                "description": "Verify account with OTP"
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "🛍️ SAEAHA APP",
+      "description": "Complete API collection for saeaha-app_v2.0.0 (Express). Base URL: http://localhost:5002",
+      "item": [
+        {
+          "name": "🏥 Health Checks",
+          "description": "App health check endpoints",
+          "item": [
+            {
+              "name": "Auth Service Status",
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "GET",
+                "url": {
+                  "raw": "{{saeaha_base_url}}/auth/status",
+                  "host": ["{{saeaha_base_url}}"],
+                  "path": ["auth", "status"]
+                },
+                "description": "Check auth service health"
+              }
+            },
+            {
+              "name": "User Service Status",
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "GET",
+                "url": {
+                  "raw": "{{saeaha_base_url}}/user/status",
+                  "host": ["{{saeaha_base_url}}"],
+                  "path": ["user", "status"]
+                },
+                "description": "Check user service health"
+              }
+            }
+          ]
+        }
+      ]
+    }
+
+  ]
+}
