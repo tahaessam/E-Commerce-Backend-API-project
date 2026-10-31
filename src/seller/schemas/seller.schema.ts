@@ -17,4 +17,3 @@ export class Seller {
 }
 
 export const SellerSchema = SchemaFactory.createForClass(Seller);
-

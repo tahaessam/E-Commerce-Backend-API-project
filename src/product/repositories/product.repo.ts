@@ -13,4 +13,3 @@ export class ProductRepository extends AbstractRepository<ProductDocument> {
     super(productModel);
   }
 }
-

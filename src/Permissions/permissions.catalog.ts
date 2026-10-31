@@ -59,7 +59,10 @@ const allPermissions = Object.values(MODULE_PERMISSIONS).flatMap(
 
 export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
   [UserRole.admin]: allPermissions,
-  [UserRole.seller]: [MODULE_PERMISSIONS.app.read, MODULE_PERMISSIONS.user.read],
+  [UserRole.seller]: [
+    MODULE_PERMISSIONS.app.read,
+    MODULE_PERMISSIONS.user.read,
+  ],
   [UserRole.user]: [MODULE_PERMISSIONS.app.read, MODULE_PERMISSIONS.user.read],
 };
 

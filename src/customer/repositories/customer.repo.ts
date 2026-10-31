@@ -13,4 +13,3 @@ export class CustomerRepository extends AbstractRepository<CustomerDocument> {
     super(customerModel);
   }
 }
-

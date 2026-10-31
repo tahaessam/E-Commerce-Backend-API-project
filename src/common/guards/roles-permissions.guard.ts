@@ -63,7 +63,7 @@ export class RolesPermissionsGuard implements CanActivate {
 
     if (user.sub) {
       const userPermissionDocument = await this.permissionRepository.findOne({
-        userId: user.sub as never,
+        userId: user.sub,
       });
 
       for (const permission of userPermissionDocument?.permission ?? []) {

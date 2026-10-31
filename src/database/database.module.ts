@@ -4,15 +4,9 @@ import { Admin, AdminSchema } from '../admin/schemas/admin.schema';
 import { AdminRepository } from '../admin/repositories/admin.repo';
 import { Brand, BrandSchema } from '../brand/schemas/brand.schema';
 import { BrandRepository } from '../brand/repositories/brand.repo';
-import {
-  Category,
-  CategorySchema,
-} from '../category/schemas/category.schema';
+import { Category, CategorySchema } from '../category/schemas/category.schema';
 import { CategoryRepository } from '../category/repositories/category.repo';
-import {
-  Customer,
-  CustomerSchema,
-} from '../customer/schemas/customer.schema';
+import { Customer, CustomerSchema } from '../customer/schemas/customer.schema';
 import { CustomerRepository } from '../customer/repositories/customer.repo';
 import { Product, ProductSchema } from '../product/schemas/product.schema';
 import { ProductRepository } from '../product/repositories/product.repo';
@@ -21,7 +15,10 @@ import { SellerRepository } from '../seller/repositories/seller.repo';
 import { User, UserSchema } from '../user/schemas/user.schema';
 import { UserRepository } from '../user/repositories/user.repo';
 import { UserRole } from '../common/enums/role.enum';
-import { Permission, permissionSchema } from '../Permissions/schema/permission.schema';
+import {
+  Permission,
+  permissionSchema,
+} from '../Permissions/schema/permission.schema';
 import { PermissionRepository } from '../Permissions/repository/permission.repositry';
 
 @Module({
@@ -65,4 +62,3 @@ import { PermissionRepository } from '../Permissions/repository/permission.repos
   ],
 })
 export class SharedModule {}
-

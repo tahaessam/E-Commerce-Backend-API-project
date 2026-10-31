@@ -100,7 +100,10 @@ export class BrandService {
     }
   }
 
-  private async ensureUniqueName(name: string, currentId?: string): Promise<void> {
+  private async ensureUniqueName(
+    name: string,
+    currentId?: string,
+  ): Promise<void> {
     const existingBrand = await this.brandRepository.findOne({
       name: { $regex: `^${this.escapeRegExp(name.trim())}$`, $options: 'i' },
     });

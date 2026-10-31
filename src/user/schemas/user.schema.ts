@@ -15,7 +15,7 @@ export class User {
   @Prop({ required: true, trim: true })
   username!: string;
 
-  @Prop({ required: true })
+  @Prop({ required: true, select: false })
   password!: string;
 
   @Prop({ required: true, unique: true, lowercase: true, trim: true })
@@ -33,8 +33,8 @@ export class User {
     required: true,
     default: UserRole.user,
   })
-  role!: UserRole;
+  @Prop({ default: false })
+  isVerified!: boolean;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
-

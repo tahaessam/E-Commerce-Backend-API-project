@@ -95,5 +95,3 @@ describe('UserService', () => {
     expect(mockUserRepository.delete).toHaveBeenCalledWith(userId);
   });
 });
-
-

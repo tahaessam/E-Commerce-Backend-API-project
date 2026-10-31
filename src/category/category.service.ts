@@ -156,7 +156,10 @@ export class CategoryService {
     }
   }
 
-  private async ensureUniqueName(name: string, currentId?: string): Promise<void> {
+  private async ensureUniqueName(
+    name: string,
+    currentId?: string,
+  ): Promise<void> {
     const existingCategory = await this.categoryRepository.findOne({
       name: { $regex: `^${this.escapeRegExp(name.trim())}$`, $options: 'i' },
     });

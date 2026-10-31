@@ -66,7 +66,7 @@ export abstract class AbstractRepository<
 
   async softDelete(id: string | Types.ObjectId): Promise<boolean> {
     const res = await this.model
-      .findByIdAndUpdate(id, { deletedAt: new Date() } as UpdateQuery<T>)
+      .findByIdAndUpdate(id, { deletedAt: new Date() })
       .exec();
     return !!res;
   }

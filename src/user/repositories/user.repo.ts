@@ -16,4 +16,3 @@ export class UserRepository extends AbstractRepository<UserDocument> {
     return this.findOne({ email: email.toLowerCase().trim() });
   }
 }
-
