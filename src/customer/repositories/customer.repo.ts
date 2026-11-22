@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { FilterQuery, Model } from 'mongoose';
+import { Model } from 'mongoose';
 import { AbstractRepository } from '../../database/abstract.repo';
 import { Customer, CustomerDocument } from '../schemas/customer.schema';
 
@@ -14,7 +14,7 @@ export class CustomerRepository extends AbstractRepository<CustomerDocument> {
   }
 
   findOneWithPassword(
-    filter: FilterQuery<CustomerDocument>,
+    filter: Parameters<Model<CustomerDocument>['findOne']>[0],
   ): Promise<CustomerDocument | null> {
     return this.customerModel.findOne(filter).select('+password').exec();
   }
