@@ -19,6 +19,8 @@ import type { CachePort } from '../common/cache/cache.interface';
 import { hashPassword, comparePassword, isHashed } from '../common/helpers/password.helper';
 import { generateOtp, hashOtp, verifyOtpHash } from '../common/helpers/otp.helper';
 import * as crypto from 'crypto';
+import { UserRole } from '../common/enums/role.enum';
+import { provider_role } from '../common/enums/provider.enum';
 
 @Injectable()
 export class AuthService {
@@ -65,6 +67,8 @@ export class AuthService {
       const hashedPassword = await hashPassword(payload.user.password);
       await this.customerRepository.create({
         ...payload.user,
+        role: UserRole.user,
+        provider: provider_role.User,
         password: hashedPassword,
         isVerified: true,
       });
