@@ -1,26 +1,44 @@
-import { Controller, Body, Post } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import type { RegisterDto } from './dto/register.dto';
-import type { loginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
+import { LoginDto } from './dto/login.dto';
+import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { ResendOtpDto } from './dto/resend-otp.dto';
+import { RefreshDto } from './dto/refresh.dto';
 import { IsPublic } from '../common/decorators/public.decorator';
+
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
-  //auth/register
+
   @IsPublic()
   @Post('register')
   async register(@Body() registerDto: RegisterDto) {
-    const createdCustomer = await this.authService.register(registerDto);
+    const result = await this.authService.register(registerDto);
     return {
-      message: 'Customer registered successfully',
+      message: 'Verification code sent',
       success: true,
-      data: createdCustomer,
+      data: result,
     };
   }
-  //auth/login
-  @IsPublic() //?  public decorator to make this route public and not protected by auth guard
+
+  @IsPublic()
+  @Post('verify-otp')
+  async verifyOtp(@Body() dto: VerifyOtpDto) {
+    const result = await this.authService.verifyOtp(dto);
+    return { message: 'Account verified successfully', success: true, data: result };
+  }
+
+  @IsPublic()
+  @Post('resend-otp')
+  async resendOtp(@Body() dto: ResendOtpDto) {
+    const result = await this.authService.resendOtp(dto);
+    return { message: 'Verification code resent', success: true, data: result };
+  }
+
+  @IsPublic()
   @Post('login')
-  async login(@Body() loginDto: loginDto) {
+  async login(@Body() loginDto: LoginDto) {
     const tokens = await this.authService.login(loginDto);
     return {
       message: 'Customer logged in successfully',
@@ -28,5 +46,11 @@ export class AuthController {
       data: tokens,
     };
   }
-  //get prfile
+
+  @IsPublic()
+  @Post('refresh')
+  async refresh(@Body() dto: RefreshDto) {
+    const tokens = await this.authService.refresh(dto.refreshToken);
+    return { message: 'Tokens refreshed successfully', success: true, data: tokens };
+  }
 }

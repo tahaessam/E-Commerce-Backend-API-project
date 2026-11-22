@@ -1,6 +1,4 @@
-import { IsEmail, IsEnum, IsString, Length, Matches } from 'class-validator';
-import { UserRole } from '../../common/enums/role.enum';
-import { provider_role } from '../../common/enums/provider.enum';
+import { IsEmail, IsString, Length } from 'class-validator';
 
 export class RegisterDto {
   @IsEmail()
@@ -17,21 +15,4 @@ export class RegisterDto {
   @IsString()
   @Length(1, 20)
   phoneNumber!: string;
-
-  @IsEnum(provider_role)
-  provider!: provider_role;
-
-  @IsEnum(UserRole)
-  role!: UserRole;
-}
-
-
-
-export class RegisterDto {
-  email!: string;
-  phoneNumber!: string;
-  password!: string;
-  username!: string;
-  provider!: provider_role;
-  role!: UserRole;
 }

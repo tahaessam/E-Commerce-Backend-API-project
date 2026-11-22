@@ -61,9 +61,19 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
   [UserRole.admin]: allPermissions,
   [UserRole.seller]: [
     MODULE_PERMISSIONS.app.read,
-    MODULE_PERMISSIONS.user.read,
+    MODULE_PERMISSIONS.product.read,
+    MODULE_PERMISSIONS.brand.read,
+    MODULE_PERMISSIONS.category.read,
+    MODULE_PERMISSIONS.product.create,
+    MODULE_PERMISSIONS.product.update,
+    MODULE_PERMISSIONS.product.delete,
   ],
-  [UserRole.user]: [MODULE_PERMISSIONS.app.read, MODULE_PERMISSIONS.user.read],
+  [UserRole.user]: [
+    MODULE_PERMISSIONS.app.read,
+    MODULE_PERMISSIONS.product.read,
+    MODULE_PERMISSIONS.brand.read,
+    MODULE_PERMISSIONS.category.read,
+  ],
 };
 
 export function getRolePermissions(role: UserRole): string[] {

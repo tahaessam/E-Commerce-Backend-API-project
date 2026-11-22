@@ -15,6 +15,7 @@ export default () => ({
 
     refreshSecret: process.env.JWT_REFRESH_SECRET,
     refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
+    refreshTtlSeconds: process.env.REFRESH_TOKEN_TTL_SECONDS,
   },
 
   mailer: {

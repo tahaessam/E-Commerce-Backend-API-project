@@ -1,12 +1,5 @@
 import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
+  Body, Controller, Delete, Get, Param, Patch, Post, Query, Req,
 } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -17,6 +10,8 @@ import { UserRole } from '../common/enums/role.enum';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { MODULE_PERMISSIONS } from '../Permissions/permissions.catalog';
 
+type AuthenticatedRequest = { user: { sub: string; role: UserRole } };
+
 @Controller('product')
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
@@ -24,8 +19,8 @@ export class ProductController {
   @Post()
   @Roles(UserRole.admin, UserRole.seller)
   @Permissions(MODULE_PERMISSIONS.product.create)
-  create(@Body() createProductDto: CreateProductDto) {
-    return this.productService.create(createProductDto);
+  create(@Body() dto: CreateProductDto, @Req() request: AuthenticatedRequest) {
+    return this.productService.create(dto, request.user);
   }
 
   @Get()
@@ -45,14 +40,14 @@ export class ProductController {
   @Patch(':id')
   @Roles(UserRole.admin, UserRole.seller)
   @Permissions(MODULE_PERMISSIONS.product.update)
-  update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto) {
-    return this.productService.update(id, updateProductDto);
+  update(@Param('id') id: string, @Body() dto: UpdateProductDto, @Req() request: AuthenticatedRequest) {
+    return this.productService.update(id, dto, request.user);
   }
 
   @Delete(':id')
   @Roles(UserRole.admin, UserRole.seller)
   @Permissions(MODULE_PERMISSIONS.product.delete)
-  remove(@Param('id') id: string) {
-    return this.productService.remove(id);
+  remove(@Param('id') id: string, @Req() request: AuthenticatedRequest) {
+    return this.productService.remove(id, request.user);
   }
 }

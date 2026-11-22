@@ -1,13 +1,11 @@
 import {
   IsArray,
-  IsBoolean,
   IsMongoId,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
   IsUrl,
-  Max,
   MaxLength,
   Min,
 } from 'class-validator';
@@ -38,26 +36,12 @@ export class CreateProductDto {
   @IsMongoId()
   brand?: string;
 
+  @IsOptional()
   @IsMongoId()
-  seller!: string;
+  seller?: string;
 
   @IsOptional()
   @IsArray()
   @IsUrl({}, { each: true })
   images?: string[];
-
-  @IsOptional()
-  @IsBoolean()
-  isAvailable?: boolean;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  soldCount?: number;
-
-  @IsOptional()
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
-  @Max(5)
-  rating?: number;
 }

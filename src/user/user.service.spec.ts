@@ -1,13 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserService } from './user.service';
 import { UserRepository } from './repositories/user.repo';
-import type { CreateUserDto } from './dto/create-user.dto';
 
 describe('UserService', () => {
   let service: UserService;
 
   const mockUserRepository = {
-    create: jest.fn(),
     findAll: jest.fn(),
     findById: jest.fn(),
     update: jest.fn(),
@@ -31,18 +29,6 @@ describe('UserService', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined();
-  });
-
-  it('should create a user', async () => {
-    const createUserDto: CreateUserDto = { email: 'test@test.com' };
-    const expectedUser = { _id: '123', ...createUserDto };
-
-    mockUserRepository.create.mockResolvedValue(expectedUser);
-
-    const result = await service.create(createUserDto);
-
-    expect(result).toEqual(expectedUser);
-    expect(mockUserRepository.create).toHaveBeenCalledWith(createUserDto);
   });
 
   it('should find all users', async () => {
@@ -70,7 +56,7 @@ describe('UserService', () => {
 
   it('should update a user', async () => {
     const userId = '123';
-    const updateUserDto = { email: 'updated@test.com' };
+    const updateUserDto = { username: 'updated-user' };
     const updatedUser = { _id: userId, ...updateUserDto };
 
     mockUserRepository.update.mockResolvedValue(updatedUser);
