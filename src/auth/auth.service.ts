@@ -82,19 +82,39 @@ export class AuthService {
   }
 
   async resendOtp(dto: ResendOtpDto) {
-    const { email } = dto;
-    const existing = await this.customerRepository.findOne({ email });
-    if (!existing) throw new NotFoundException('User not found');
-    if (existing.isVerified) throw new ConflictException('Account is already verified');
-
+    const email = dto.email.toLowerCase().trim();
+    const cacheKey = this.getRegistrationCacheKey(email);
+    const pendingRegistration = await this.cachePort.get(cacheKey);
     const otp = generateOtp(this.configService.get<number>('OTP_LENGTH') ?? 6);
     const otpSecret = this.configService.get<string>('OTP_HMAC_SECRET');
     const otpHash = hashOtp(otp, otpSecret);
-    await this.cachePort.set(
-      this.getRegistrationCacheKey(email),
-      JSON.stringify({ otpHash, userId: existing._id.toString() }),
-      this.getOtpTtlSeconds(),
-    );
+
+    if (pendingRegistration) {
+      const pendingPayload = JSON.parse(pendingRegistration) as {
+        otpHash: string;
+        user?: RegisterDto;
+        userId?: string;
+      };
+      if (!pendingPayload.user && !pendingPayload.userId) {
+        throw new UnauthorizedException('Invalid registration verification state');
+      }
+      await this.cachePort.set(
+        cacheKey,
+        JSON.stringify({ ...pendingPayload, otpHash }),
+        this.getOtpTtlSeconds(),
+      );
+    } else {
+      const existing = await this.customerRepository.findOne({ email });
+      if (!existing) throw new NotFoundException('User not found');
+      if (existing.isVerified) throw new ConflictException('Account is already verified');
+
+      await this.cachePort.set(
+        cacheKey,
+        JSON.stringify({ otpHash, userId: existing._id.toString() }),
+        this.getOtpTtlSeconds(),
+      );
+    }
+
     await this.emailService.sendOtpEmail(email, otp);
     return { success: true };
   }
@@ -134,9 +154,22 @@ export class AuthService {
 
   async refresh(refreshToken: string) {
     const refreshJwtSecret = this.configService.get<string>('jwt.refreshSecret');
-    const payload = this.jwtService.verify(refreshToken, {
-      secret: refreshJwtSecret,
-    }) as { sub: string; role: string; jti: string };
+    let payload: { sub: string; role: UserRole; jti: string };
+    try {
+      payload = this.jwtService.verify(refreshToken, {
+        secret: refreshJwtSecret,
+      }) as { sub: string; role: UserRole; jti: string };
+    } catch {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+    if (
+      !payload ||
+      typeof payload.sub !== 'string' ||
+      typeof payload.jti !== 'string' ||
+      !Object.values(UserRole).includes(payload.role)
+    ) {
+      throw new UnauthorizedException('Invalid refresh token payload');
+    }
     const { jti } = payload;
     const storedHash = await this.cachePort.get(`auth:refresh:${jti}`);
     if (!storedHash) throw new UnauthorizedException('Refresh token not recognized');
