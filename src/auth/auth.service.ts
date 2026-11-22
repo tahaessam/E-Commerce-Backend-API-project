@@ -49,12 +49,29 @@ export class AuthService {
     const stored = await this.cachePort.get(cacheKey);
     if (!stored) throw new NotFoundException('OTP not found or expired');
 
-    const { otpHash, user } = JSON.parse(stored);
+    const payload = JSON.parse(stored) as {
+      otpHash: string;
+      user?: RegisterDto;
+      userId?: string;
+    };
     const otpSecret = this.configService.get<string>('OTP_HMAC_SECRET');
-    if (!verifyOtpHash(otpHash, otp, otpSecret)) throw new UnauthorizedException('Invalid OTP');
+    if (!verifyOtpHash(payload.otpHash, otp, otpSecret)) {
+      throw new UnauthorizedException('Invalid OTP');
+    }
 
-    const hashedPassword = await hashPassword(user.password);
-    await this.customerRepository.create({ ...user, password: hashedPassword, isVerified: true });
+    if (payload.userId) {
+      await this.customerRepository.update(payload.userId, { isVerified: true });
+    } else if (payload.user) {
+      const hashedPassword = await hashPassword(payload.user.password);
+      await this.customerRepository.create({
+        ...payload.user,
+        password: hashedPassword,
+        isVerified: true,
+      });
+    } else {
+      throw new UnauthorizedException('Invalid verification request');
+    }
+
     await this.cachePort.del(cacheKey);
     return { success: true };
   }
@@ -63,14 +80,16 @@ export class AuthService {
     const { email } = dto;
     const existing = await this.customerRepository.findOne({ email });
     if (!existing) throw new NotFoundException('User not found');
+    if (existing.isVerified) throw new ConflictException('Account is already verified');
 
     const otp = generateOtp(this.configService.get<number>('OTP_LENGTH') ?? 6);
     const otpSecret = this.configService.get<string>('OTP_HMAC_SECRET');
     const otpHash = hashOtp(otp, otpSecret);
-    await this.cachePort.set(this.getRegistrationCacheKey(email), JSON.stringify({
-      otpHash,
-      user: { email, password: existing.password },
-    }), this.getOtpTtlSeconds());
+    await this.cachePort.set(
+      this.getRegistrationCacheKey(email),
+      JSON.stringify({ otpHash, userId: existing._id.toString() }),
+      this.getOtpTtlSeconds(),
+    );
     await this.emailService.sendOtpEmail(email, otp);
     return { success: true };
   }
@@ -95,7 +114,13 @@ export class AuthService {
 
     const jti = crypto.randomUUID();
     const accessToken = await this.jwtService.signAsync({ sub: user._id.toString(), role: user.role });
-    const refreshToken = await this.jwtService.signAsync({ sub: user._id.toString(), role: user.role, jti }, { expiresIn: '7d' });
+    const refreshToken = await this.jwtService.signAsync(
+      { sub: user._id.toString(), role: user.role, jti },
+      {
+        secret: this.configService.get<string>('jwt.refreshSecret'),
+        expiresIn: this.configService.get<string>('jwt.refreshExpiresIn') ?? '7d',
+      },
+    );
     const refreshSecret = this.configService.get<string>('REFRESH_HMAC_SECRET');
     const refreshHash = hashOtp(refreshToken, refreshSecret);
     await this.cachePort.set(`auth:refresh:${jti}`, refreshHash, 7 * 24 * 60 * 60);
@@ -103,18 +128,32 @@ export class AuthService {
   }
 
   async refresh(refreshToken: string) {
-    const payload = this.jwtService.verify(refreshToken) as { sub: string; role: string; jti: string };
+    const refreshJwtSecret = this.configService.get<string>('jwt.refreshSecret');
+    const payload = this.jwtService.verify(refreshToken, {
+      secret: refreshJwtSecret,
+    }) as { sub: string; role: string; jti: string };
     const { jti } = payload;
     const storedHash = await this.cachePort.get(`auth:refresh:${jti}`);
     if (!storedHash) throw new UnauthorizedException('Refresh token not recognized');
 
     const refreshSecret = this.configService.get<string>('REFRESH_HMAC_SECRET');
-    if (!verifyOtpHash(storedHash, refreshToken, refreshSecret)) throw new UnauthorizedException('Invalid refresh token');
+    if (!verifyOtpHash(storedHash, refreshToken, refreshSecret)) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
 
     await this.cachePort.del(`auth:refresh:${jti}`);
     const newJti = crypto.randomUUID();
-    const newRefresh = await this.jwtService.signAsync({ sub: payload.sub, role: payload.role, jti: newJti }, { expiresIn: '7d' });
-    const newAccess = await this.jwtService.signAsync({ sub: payload.sub, role: payload.role });
+    const newRefresh = await this.jwtService.signAsync(
+      { sub: payload.sub, role: payload.role, jti: newJti },
+      {
+        secret: refreshJwtSecret,
+        expiresIn: this.configService.get<string>('jwt.refreshExpiresIn') ?? '7d',
+      },
+    );
+    const newAccess = await this.jwtService.signAsync({
+      sub: payload.sub,
+      role: payload.role,
+    });
     const newHash = hashOtp(newRefresh, refreshSecret);
     await this.cachePort.set(`auth:refresh:${newJti}`, newHash, 7 * 24 * 60 * 60);
     return { accessToken: newAccess, refreshToken: newRefresh, jti: newJti };
