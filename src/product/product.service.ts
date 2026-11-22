@@ -91,9 +91,12 @@ export class ProductService {
     if (dto.brand) await this.ensureBrandExists(dto.brand);
     if (dto.name) dto.name = dto.name.trim();
     if (dto.description) dto.description = dto.description.trim();
-    if (typeof dto.quantity === 'number') dto.isAvailable = dto.quantity > 0;
+    const updatePayload: UpdateProductDto & { isAvailable?: boolean } = { ...dto };
+    if (typeof dto.quantity === 'number') {
+      updatePayload.isAvailable = dto.quantity > 0;
+    }
 
-    const updated = await this.productRepository.update(id, dto);
+    const updated = await this.productRepository.update(id, updatePayload);
     if (!updated) throw new NotFoundException('Product not found');
     return updated;
   }
