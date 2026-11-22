@@ -5,6 +5,8 @@ import {
   NotFoundException,
   UnauthorizedException,
   ForbiddenException,
+  TooManyRequestsException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import type { JwtSignOptions } from '@nestjs/jwt';
@@ -41,7 +43,7 @@ export class AuthService {
     if (existing) throw new ConflictException('User already exists');
 
     const otp = generateOtp(this.configService.get<number>('OTP_LENGTH') ?? 6);
-    const otpSecret = this.configService.get<string>('OTP_HMAC_SECRET');
+    const otpSecret = this.getRequiredSecret('OTP_HMAC_SECRET');
     const otpHash = hashOtp(otp, otpSecret);
     const passwordHash = await hashPassword(registerDto.password);
     const cacheKey = this.getRegistrationCacheKey(email);
@@ -63,9 +65,14 @@ export class AuthService {
       userId?: string;
     };
     const otpSecret = this.configService.get<string>('OTP_HMAC_SECRET');
+    const attemptsKey = `auth:otp:attempts:${email.toLowerCase().trim()}`;
+    const attempts = Number((await this.cachePort.get(attemptsKey)) ?? 0);
+    if (attempts >= 5) throw new TooManyRequestsException('Too many OTP attempts');
+    await this.cachePort.set(attemptsKey, String(attempts + 1), this.getOtpTtlSeconds());
     if (!verifyOtpHash(payload.otpHash, otp, otpSecret)) {
       throw new UnauthorizedException('Invalid OTP');
     }
+    await this.cachePort.del(attemptsKey);
 
     if (payload.userId) {
       await this.customerRepository.update(payload.userId, { isVerified: true });
@@ -149,14 +156,14 @@ export class AuthService {
         expiresIn: (this.configService.get<string>('jwt.refreshExpiresIn') ?? '7d') as JwtSignOptions['expiresIn'],
       },
     );
-    const refreshSecret = this.configService.get<string>('REFRESH_HMAC_SECRET');
+    const refreshSecret = this.getRequiredSecret('REFRESH_HMAC_SECRET');
     const refreshHash = hashOtp(refreshToken, refreshSecret);
     await this.cachePort.set(`auth:refresh:${jti}`, refreshHash, this.getRefreshTtlSeconds());
     return { accessToken, refreshToken, jti };
   }
 
   async refresh(refreshToken: string) {
-    const refreshJwtSecret = this.configService.get<string>('jwt.refreshSecret');
+    const refreshJwtSecret = this.getRequiredSecret('jwt.refreshSecret');
     let payload: { sub: string; role: UserRole; jti: string };
     try {
       payload = this.jwtService.verify(refreshToken, {
@@ -204,6 +211,14 @@ export class AuthService {
     const user = await this.customerRepository.findOne({ _id: userId });
     if (!user) throw new NotFoundException('User not found');
     return user;
+  }
+
+  private getRequiredSecret(key: string): string {
+    const value = this.configService.get<string>(key);
+    if (!value || value.length < 32) {
+      throw new InternalServerErrorException(key + ' must be configured with at least 32 characters');
+    }
+    return value;
   }
 
   private getOtpTtlSeconds(): number {
