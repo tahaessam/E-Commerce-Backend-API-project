@@ -5,7 +5,8 @@ import {
   NotFoundException,
   UnauthorizedException,
   ForbiddenException,
-  TooManyRequestsException,
+  HttpException,
+  HttpStatus,
   InternalServerErrorException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -67,7 +68,7 @@ export class AuthService {
     const otpSecret = this.getRequiredSecret('OTP_HMAC_SECRET');
     const attemptsKey = `auth:otp:attempts:${email.toLowerCase().trim()}`;
     const attempts = Number((await this.cachePort.get(attemptsKey)) ?? 0);
-    if (attempts >= 5) throw new TooManyRequestsException('Too many OTP attempts');
+    if (attempts >= 5) throw new HttpException('Too many OTP attempts', HttpStatus.TOO_MANY_REQUESTS);
     await this.cachePort.set(attemptsKey, String(attempts + 1), this.getOtpTtlSeconds());
     if (!verifyOtpHash(payload.otpHash, otp, otpSecret)) {
       throw new UnauthorizedException('Invalid OTP');
@@ -97,7 +98,7 @@ export class AuthService {
     const pendingRegistration = await this.cachePort.get(cacheKey);
     const resendKey = `auth:otp:resend:${email}`;
     const resendCount = Number((await this.cachePort.get(resendKey)) ?? 0);
-    if (resendCount >= 3) throw new TooManyRequestsException('OTP resend limit reached');
+    if (resendCount >= 3) throw new HttpException('OTP resend limit reached', HttpStatus.TOO_MANY_REQUESTS);
     await this.cachePort.set(resendKey, String(resendCount + 1), this.getOtpTtlSeconds());
     const otp = generateOtp(this.configService.get<number>('OTP_LENGTH') ?? 6);
     const otpSecret = this.getRequiredSecret('OTP_HMAC_SECRET');
