@@ -64,7 +64,7 @@ export class AuthService {
       user?: RegisterDto;
       userId?: string;
     };
-    const otpSecret = this.configService.get<string>('OTP_HMAC_SECRET');
+    const otpSecret = this.getRequiredSecret('OTP_HMAC_SECRET');
     const attemptsKey = `auth:otp:attempts:${email.toLowerCase().trim()}`;
     const attempts = Number((await this.cachePort.get(attemptsKey)) ?? 0);
     if (attempts >= 5) throw new TooManyRequestsException('Too many OTP attempts');
@@ -96,7 +96,7 @@ export class AuthService {
     const cacheKey = this.getRegistrationCacheKey(email);
     const pendingRegistration = await this.cachePort.get(cacheKey);
     const otp = generateOtp(this.configService.get<number>('OTP_LENGTH') ?? 6);
-    const otpSecret = this.configService.get<string>('OTP_HMAC_SECRET');
+    const otpSecret = this.getRequiredSecret('OTP_HMAC_SECRET');
     const otpHash = hashOtp(otp, otpSecret);
 
     if (pendingRegistration) {
@@ -147,12 +147,14 @@ export class AuthService {
     if (!passwordMatches) throw new UnauthorizedException('Invalid credentials');
     if (!user.isVerified) throw new ForbiddenException('Account not verified');
 
+    const refreshJwtSecret = this.getRequiredSecret('jwt.refreshSecret');
+    this.getRequiredSecret('jwt.accessSecret');
     const jti = crypto.randomUUID();
     const accessToken = await this.jwtService.signAsync({ sub: user._id.toString(), role: user.role });
     const refreshToken = await this.jwtService.signAsync(
       { sub: user._id.toString(), role: user.role, jti },
       {
-        secret: this.configService.get<string>('jwt.refreshSecret'),
+        secret: refreshJwtSecret,
         expiresIn: (this.configService.get<string>('jwt.refreshExpiresIn') ?? '7d') as JwtSignOptions['expiresIn'],
       },
     );
@@ -184,7 +186,7 @@ export class AuthService {
     const storedHash = await this.cachePort.get(`auth:refresh:${jti}`);
     if (!storedHash) throw new UnauthorizedException('Refresh token not recognized');
 
-    const refreshSecret = this.configService.get<string>('REFRESH_HMAC_SECRET');
+    const refreshSecret = this.getRequiredSecret('REFRESH_HMAC_SECRET');
     if (!verifyOtpHash(storedHash, refreshToken, refreshSecret)) {
       throw new UnauthorizedException('Invalid refresh token');
     }
