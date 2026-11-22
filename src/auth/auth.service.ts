@@ -152,7 +152,7 @@ export class AuthService {
       { sub: payload.sub, role: payload.role, jti: newJti },
       {
         secret: refreshJwtSecret,
-        expiresIn: this.configService.get<string>('jwt.refreshExpiresIn') ?? '7d',
+        expiresIn: (this.configService.get<string>('jwt.refreshExpiresIn') ?? '7d') as JwtSignOptions['expiresIn'],
       },
     );
     const newAccess = await this.jwtService.signAsync({
