@@ -64,7 +64,7 @@ export class ProductService {
 
     if (options.search) {
       filter.name = {
-        $regex: options.search.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\filter.name = { $regex: options.search, $options: 'i' };'),
+        $regex: options.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
         $options: 'i',
       };
     }
