@@ -34,17 +34,18 @@ export class AuthService {
   ) {}
 
   async register(registerDto: RegisterDto) {
-    const existing = await this.customerRepository.findOne({ email: registerDto.email });
+    const email = registerDto.email.toLowerCase().trim();
+    const existing = await this.customerRepository.findOne({ email });
     if (existing) throw new ConflictException('User already exists');
 
     const otp = generateOtp(this.configService.get<number>('OTP_LENGTH') ?? 6);
     const otpSecret = this.configService.get<string>('OTP_HMAC_SECRET');
     const otpHash = hashOtp(otp, otpSecret);
     const passwordHash = await hashPassword(registerDto.password);
-    const cacheKey = this.getRegistrationCacheKey(registerDto.email);
-    const user = { ...registerDto, password: passwordHash };
+    const cacheKey = this.getRegistrationCacheKey(email);
+    const user = { ...registerDto, email, password: passwordHash };
     await this.cachePort.set(cacheKey, JSON.stringify({ otpHash, user }), this.getOtpTtlSeconds());
-    await this.emailService.sendOtpEmail(registerDto.email, otp);
+    await this.emailService.sendOtpEmail(email, otp);
     return { success: true };
   }
 
@@ -120,7 +121,7 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto) {
-    const user = await this.customerRepository.findOneWithPassword({ email: loginDto.email });
+    const user = await this.customerRepository.findOneWithPassword({ email: loginDto.email.toLowerCase().trim() });
     if (!user) throw new NotFoundException('User not found');
 
     const storedPassword = user.password as string;
