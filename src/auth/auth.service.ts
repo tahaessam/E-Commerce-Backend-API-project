@@ -7,6 +7,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import type { JwtSignOptions } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -122,7 +123,7 @@ export class AuthService {
       { sub: user._id.toString(), role: user.role, jti },
       {
         secret: this.configService.get<string>('jwt.refreshSecret'),
-        expiresIn: this.configService.get<string>('jwt.refreshExpiresIn') ?? '7d',
+        expiresIn: (this.configService.get<string>('jwt.refreshExpiresIn') ?? '7d') as JwtSignOptions['expiresIn'],
       },
     );
     const refreshSecret = this.configService.get<string>('REFRESH_HMAC_SECRET');
