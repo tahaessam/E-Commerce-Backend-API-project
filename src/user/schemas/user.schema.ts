@@ -33,6 +33,8 @@ export class User {
     required: true,
     default: UserRole.user,
   })
+  role!: UserRole;
+
   @Prop({ default: false })
   isVerified!: boolean;
 }
