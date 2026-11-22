@@ -86,7 +86,7 @@ src/
 ```bash
 git clone https://github.com/tahaessam/E-Commerce-Backend-API-project.git
 cd E-Commerce-Backend-API-project
-npm install
+npm ci
 ```
 
 ### Environment configuration
