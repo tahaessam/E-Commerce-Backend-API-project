@@ -62,6 +62,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
   [UserRole.seller]: [
     MODULE_PERMISSIONS.app.read,
     MODULE_PERMISSIONS.product.read,
+    MODULE_PERMISSIONS.brand.read,
+    MODULE_PERMISSIONS.category.read,
     MODULE_PERMISSIONS.product.create,
     MODULE_PERMISSIONS.product.update,
     MODULE_PERMISSIONS.product.delete,
@@ -69,6 +71,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
   [UserRole.user]: [
     MODULE_PERMISSIONS.app.read,
     MODULE_PERMISSIONS.product.read,
+    MODULE_PERMISSIONS.brand.read,
+    MODULE_PERMISSIONS.category.read,
   ],
 };
 
