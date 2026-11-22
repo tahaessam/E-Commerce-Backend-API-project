@@ -1,9 +1,9 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import type { RegisterDto } from './dto/register.dto';
-import type { LoginDto } from './dto/login.dto';
-import type { VerifyOtpDto } from './dto/verify-otp.dto';
-import type { ResendOtpDto } from './dto/resend-otp.dto';
+import { RegisterDto } from './dto/register.dto';
+import { LoginDto } from './dto/login.dto';
+import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { ResendOtpDto } from './dto/resend-otp.dto';
 import { RefreshDto } from './dto/refresh.dto';
 import { IsPublic } from '../common/decorators/public.decorator';
 
