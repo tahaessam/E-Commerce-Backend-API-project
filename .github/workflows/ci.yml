@@ -90,3 +90,38 @@ jobs:
 
       - name: Run end-to-end tests
         run: npm run test:e2e -- --runInBand
+
+  sync-lockfile:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout pull request branch
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Regenerate lockfile without running package scripts
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+
+      - name: Commit lockfile when it changes
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          if git diff --quiet -- package-lock.json; then
+            echo "package-lock.json is already synchronized"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          git commit -m "chore: regenerate npm lockfile"
+          git push origin "HEAD:${HEAD_REF}"
