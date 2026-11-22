@@ -14,6 +14,7 @@ import { LoginDto } from './dto/login.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { ResendOtpDto } from './dto/resend-otp.dto';
 import { CustomerRepository } from '../customer/repositories/customer.repo';
+import { UserRepository } from '../user/repositories/user.repo';
 import { EmailService } from '../mailer/mail.service';
 import { CACHE_PORT } from '../common/cache/cache.tokens';
 import type { CachePort } from '../common/cache/cache.interface';
@@ -27,6 +28,7 @@ import { provider_role } from '../common/enums/provider.enum';
 export class AuthService {
   constructor(
     private readonly customerRepository: CustomerRepository,
+    private readonly userRepository: UserRepository,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly emailService: EmailService,
@@ -35,7 +37,7 @@ export class AuthService {
 
   async register(registerDto: RegisterDto) {
     const email = registerDto.email.toLowerCase().trim();
-    const existing = await this.customerRepository.findOne({ email });
+    const existing = await this.userRepository.findByEmail(email);
     if (existing) throw new ConflictException('User already exists');
 
     const otp = generateOtp(this.configService.get<number>('OTP_LENGTH') ?? 6);
@@ -149,7 +151,7 @@ export class AuthService {
     );
     const refreshSecret = this.configService.get<string>('REFRESH_HMAC_SECRET');
     const refreshHash = hashOtp(refreshToken, refreshSecret);
-    await this.cachePort.set(`auth:refresh:${jti}`, refreshHash, 7 * 24 * 60 * 60);
+    await this.cachePort.set(`auth:refresh:${jti}`, refreshHash, this.getRefreshTtlSeconds());
     return { accessToken, refreshToken, jti };
   }
 
@@ -194,7 +196,7 @@ export class AuthService {
       role: payload.role,
     });
     const newHash = hashOtp(newRefresh, refreshSecret);
-    await this.cachePort.set(`auth:refresh:${newJti}`, newHash, 7 * 24 * 60 * 60);
+    await this.cachePort.set(`auth:refresh:${newJti}`, newHash, this.getRefreshTtlSeconds());
     return { accessToken: newAccess, refreshToken: newRefresh, jti: newJti };
   }
 
@@ -207,6 +209,11 @@ export class AuthService {
   private getOtpTtlSeconds(): number {
     const ttl = Number(this.configService.get<string>('OTP_EXPIRES_IN') ?? 300);
     return Number.isFinite(ttl) && ttl > 0 ? ttl : 300;
+  }
+
+  private getRefreshTtlSeconds(): number {
+    const ttl = Number(this.configService.get<string>('REFRESH_TOKEN_TTL_SECONDS') ?? 604800);
+    return Number.isFinite(ttl) && ttl > 0 ? ttl : 604800;
   }
 
   private getRegistrationCacheKey(email: string): string {
