@@ -1,12 +1,13 @@
 import { Controller, Body, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import type { RegisterDto } from './dto/register.dto';
-import type { loginDto } from './dto/login.dto';
+import type { LoginDto } from './dto/login.dto';
 import { IsPublic } from '../common/decorators/public.decorator';
+
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
-  //auth/register
+
   @IsPublic()
   @Post('register')
   async register(@Body() registerDto: RegisterDto) {
@@ -17,10 +18,10 @@ export class AuthController {
       data: createdCustomer,
     };
   }
-  //auth/login
-  @IsPublic() //?  public decorator to make this route public and not protected by auth guard
+
+  @IsPublic()
   @Post('login')
-  async login(@Body() loginDto: loginDto) {
+  async login(@Body() loginDto: LoginDto) {
     const tokens = await this.authService.login(loginDto);
     return {
       message: 'Customer logged in successfully',
@@ -28,5 +29,4 @@ export class AuthController {
       data: tokens,
     };
   }
-  //get prfile
 }
