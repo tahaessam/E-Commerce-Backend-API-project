@@ -24,6 +24,7 @@ import type { CachePort } from '../common/cache/cache.interface';
 import { hashPassword, comparePassword, isHashed } from '../common/helpers/password.helper';
 import { generateOtp, hashOtp, verifyOtpHash } from '../common/helpers/otp.helper';
 import * as crypto from 'crypto';
+import { Types } from 'mongoose';
 import { UserRole } from '../common/enums/role.enum';
 import { provider_role } from '../common/enums/provider.enum';
 
@@ -183,10 +184,16 @@ export class AuthService {
       !payload ||
       typeof payload.sub !== 'string' ||
       typeof payload.jti !== 'string' ||
-      !Object.values(UserRole).includes(payload.role)
+      !Object.values(UserRole).includes(payload.role) ||
+      !Types.ObjectId.isValid(payload.sub)
     ) {
       throw new UnauthorizedException('Invalid refresh token payload');
     }
+    const currentUser = await this.userRepository.findById(payload.sub);
+    if (!currentUser || !Object.values(UserRole).includes(currentUser.role)) {
+      throw new UnauthorizedException('Refresh token account is no longer available');
+    }
+    const currentRole = currentUser.role;
     const { jti } = payload;
     const storedHash = await this.cachePort.get(`auth:refresh:${jti}`);
     if (!storedHash) throw new UnauthorizedException('Refresh token not recognized');
@@ -199,7 +206,7 @@ export class AuthService {
     await this.cachePort.del(`auth:refresh:${jti}`);
     const newJti = crypto.randomUUID();
     const newRefresh = await this.jwtService.signAsync(
-      { sub: payload.sub, role: payload.role, jti: newJti },
+      { sub: payload.sub, role: currentRole, jti: newJti },
       {
         secret: refreshJwtSecret,
         expiresIn: (this.configService.get<string>('jwt.refreshExpiresIn') ?? '7d') as JwtSignOptions['expiresIn'],
@@ -207,7 +214,7 @@ export class AuthService {
     );
     const newAccess = await this.jwtService.signAsync({
       sub: payload.sub,
-      role: payload.role,
+      role: currentRole,
     });
     const newHash = hashOtp(newRefresh, refreshSecret);
     await this.cachePort.set(`auth:refresh:${newJti}`, newHash, this.getRefreshTtlSeconds());
