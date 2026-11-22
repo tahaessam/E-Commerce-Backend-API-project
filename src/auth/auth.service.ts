@@ -95,6 +95,10 @@ export class AuthService {
     const email = dto.email.toLowerCase().trim();
     const cacheKey = this.getRegistrationCacheKey(email);
     const pendingRegistration = await this.cachePort.get(cacheKey);
+    const resendKey = `auth:otp:resend:${email}`;
+    const resendCount = Number((await this.cachePort.get(resendKey)) ?? 0);
+    if (resendCount >= 3) throw new TooManyRequestsException('OTP resend limit reached');
+    await this.cachePort.set(resendKey, String(resendCount + 1), this.getOtpTtlSeconds());
     const otp = generateOtp(this.configService.get<number>('OTP_LENGTH') ?? 6);
     const otpSecret = this.getRequiredSecret('OTP_HMAC_SECRET');
     const otpHash = hashOtp(otp, otpSecret);
