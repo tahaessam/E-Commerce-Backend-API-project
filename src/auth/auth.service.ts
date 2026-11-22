@@ -39,8 +39,10 @@ export class AuthService {
     const otp = generateOtp(this.configService.get<number>('OTP_LENGTH') ?? 6);
     const otpSecret = this.configService.get<string>('OTP_HMAC_SECRET');
     const otpHash = hashOtp(otp, otpSecret);
+    const passwordHash = await hashPassword(registerDto.password);
     const cacheKey = this.getRegistrationCacheKey(registerDto.email);
-    await this.cachePort.set(cacheKey, JSON.stringify({ otpHash, user: registerDto }), this.getOtpTtlSeconds());
+    const user = { ...registerDto, password: passwordHash };
+    await this.cachePort.set(cacheKey, JSON.stringify({ otpHash, user }), this.getOtpTtlSeconds());
     await this.emailService.sendOtpEmail(registerDto.email, otp);
     return { success: true };
   }
@@ -64,12 +66,10 @@ export class AuthService {
     if (payload.userId) {
       await this.customerRepository.update(payload.userId, { isVerified: true });
     } else if (payload.user) {
-      const hashedPassword = await hashPassword(payload.user.password);
       await this.customerRepository.create({
         ...payload.user,
         role: UserRole.user,
         provider: provider_role.User,
-        password: hashedPassword,
         isVerified: true,
       });
     } else {
