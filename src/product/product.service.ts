@@ -52,10 +52,21 @@ export class ProductService {
       isAvailable: query.isAvailable,
     };
 
+    if (
+      typeof options.minPrice === 'number' &&
+      typeof options.maxPrice === 'number' &&
+      options.minPrice > options.maxPrice
+    ) {
+      throw new BadRequestException('minPrice cannot be greater than maxPrice');
+    }
+
     const filter: Record<string, unknown> = {};
 
     if (options.search) {
-      filter.name = { $regex: options.search, $options: 'i' };
+      filter.name = {
+        $regex: options.search.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\filter.name = { $regex: options.search, $options: 'i' };'),
+        $options: 'i',
+      };
     }
 
     if (options.category) {
